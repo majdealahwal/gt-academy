@@ -1,0 +1,34 @@
+stages:
+  - build
+  - test
+  - security_scan
+
+variables:
+  IMAGE_BACKEND: $CI_REGISTRY_IMAGE:backend
+  IMAGE_FRONTEND: $CI_REGISTRY_IMAGE:frontend
+
+build:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_BACKEND ./backend
+    - docker push $IMAGE_BACKEND
+    - docker build -t $IMAGE_FRONTEND ./frontend
+    - docker push $IMAGE_FRONTEND
+
+test:
+  stage: test
+  image: node:18-alpine
+  script:
+    - cd backend
+    - npm ci
+    - npm test
+
+security_scan:
+  stage: security_scan
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --severity CRITICAL --exit-code 1 --no-progress $IMAGE_BACKEND
