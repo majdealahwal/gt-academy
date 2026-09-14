@@ -29,6 +29,8 @@ test:
 
 security_scan:
   stage: security_scan
-  image: aquasec/trivy:latest
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
   script:
     - trivy image --severity CRITICAL --exit-code 1 --no-progress $IMAGE_BACKEND
