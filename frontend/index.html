@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>GloryTech Academy</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f1420;
+      color: #eee;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 { text-align: center; }
+    #status {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+    }
+    .connected { color: #2ecc71; }
+    .fallback { color: #e67e22; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #1b2233;
+      border-radius: 8px;
+      padding: 1rem;
+      border-left: 6px solid var(--vendor-color, #555);
+    }
+    .card h3 { margin: 0 0 0.3rem 0; }
+    .card span { font-size: 0.85rem; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <h1>GloryTech Academy</h1>
+  <div id="status">جارٍ التحقق من الاتصال بالـ backend...</div>
+  <div class="grid" id="courses"></div>
+
+  <script>
+    // بيانات احتياطية (fallback) تظهر فقط إذا فشل الاتصال بالـ backend
+    const fallbackCourses = [
+      { id: 0, name: 'بيانات تجريبية (Fallback)', vendor: 'N/A', color: '#888', level: '-' },
+    ];
+
+    // ملاحظة مهمة: المسار نسبي "/api/courses" وليس "http://backend:3000/api/courses"
+    // السبب: المتصفح ما يقدر يوصل للـ backend مباشرة داخل الـ cluster (شرح كامل في Part 4)
+    async function loadCourses() {
+      const statusEl = document.getElementById('status');
+      const gridEl = document.getElementById('courses');
+
+      try {
+        const res = await fetch('/api/courses');
+        if (!res.ok) throw new Error('Bad response');
+        const courses = await res.json();
+
+        statusEl.textContent = '✔ متصل بالـ backend - بيانات حية';
+        statusEl.className = 'connected';
+        render(courses, gridEl);
+      } catch (err) {
+        statusEl.textContent = '⚠ غير متصل - يتم عرض بيانات احتياطية';
+        statusEl.className = 'fallback';
+        render(fallbackCourses, gridEl);
+      }
+    }
+
+    function render(courses, container) {
+      container.innerHTML = '';
+      courses.forEach((course) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.setProperty('--vendor-color', course.color);
+        card.innerHTML = `
+          <h3>${course.name}</h3>
+          <span>${course.vendor} · ${course.level}</span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    loadCourses();
+  </script>
+</body>
+</html>
